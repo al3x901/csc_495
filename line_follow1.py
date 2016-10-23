@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/gpl-3.0.txt>.
 '''
 import line_sensor
 import time
+import networking_server
 import gopigo
 import atexit
 from gopigo import *
@@ -42,6 +43,9 @@ turn_speed=int(.7*fwd_speed)
 
 last_val=[0]*5						# An array to keep track of the previous values.
 curr=[0]*5							# An array to keep track of the current values.
+map=[]								# An Array to hold the values of steps taken 
+server = networking_server()
+
 
 gopigo.set_speed(fwd_speed)
 
@@ -86,6 +90,7 @@ def go_straight():
 	if gpg_en:
 		gopigo.set_speed(fwd_speed)
 		gopigo.fwd()
+		map.append("s")
 		
 def turn_slight_left():
 	if msg_en:
@@ -94,6 +99,7 @@ def turn_slight_left():
 		gopigo.set_right_speed(slight_turn_speed)
 		gopigo.set_left_speed(fwd_speed)
 		gopigo.fwd()
+		map.append("sl")
 		
 def turn_left():
 	if msg_en:
@@ -101,6 +107,7 @@ def turn_left():
 	if gpg_en:
 		gopigo.set_speed(turn_speed)
 		gopigo.left()
+		map.append("l")
 		
 def turn_slight_right():
 	if msg_en:
@@ -109,6 +116,7 @@ def turn_slight_right():
 		gopigo.set_right_speed(fwd_speed)
 		gopigo.set_left_speed(slight_turn_speed)
 		gopigo.fwd()
+		map.append("sr")
 
 def turn_right():
 	if msg_en:
@@ -116,12 +124,14 @@ def turn_right():
 	if gpg_en:
 		gopigo.set_speed(turn_speed)
 		gopigo.right()
+		map.append("r")
 	
 def stop_now():
 	if msg_en:
 		print "Stop"
 	if gpg_en:
 		gopigo.stop()
+		map.append("st")
 		
 def go_back():
 	if msg_en:
@@ -129,6 +139,7 @@ def go_back():
 	if gpg_en:
 		gopigo.set_speed(turn_speed)
 		gopigo.bwd()
+		map.append("b")
 	
 #Action to run when a line is detected
 def run_gpg(curr):
@@ -170,8 +181,10 @@ while True:
 	curr=absolute_line_pos()
 	print curr
 
-        go_straight()
-	
+	if len(map) > 50:
+		server.send_map(map)
+		del map
+
 	#white line reached
 	if curr== stop1:
 		if msg_en:
